@@ -14,6 +14,7 @@ from datetime import datetime, timedelta
 from shared.database import DatabaseManager
 from shared.ai_engine import AIAnalysisEngine
 from yahoo_wrapper import YahooFantasyAPI
+from monitoring import metrics_middleware, get_health_status, metrics
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -34,6 +35,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Add metrics middleware
+app.middleware("http")(metrics_middleware)
 
 # Initialize components
 db_manager = DatabaseManager()
