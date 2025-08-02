@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fantasy AI Ultimate - League Manager</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .main-content {
+            padding: 40px;
+        }
+        
+        .section {
+            margin-bottom: 40px;
+            padding: 30px;
+            border: 1px solid #e1e8ed;
+            border-radius: 10px;
+            background: #f8f9fa;
+        }
+        
+        .section h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+        
+        .button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1em;
+            margin: 10px;
+            transition: transform 0.2s;
+        }
+        
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .button.success {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        }
+        
+        .button.warning {
+            background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+        }
+        
+        .input-group {
+            margin: 20px 0;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            font-size: 1em;
+        }
+        
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .results {
+            margin-top: 20px;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e1e8ed;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .league-card {
+            background: white;
+            border: 1px solid #e1e8ed;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 10px 0;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .league-card:hover {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        
+        .league-card h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .league-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .info-item {
+            background: #f8f9fa;
+            padding: 8px 12px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        
+        .info-label {
+            font-size: 0.8em;
+            color: #6c757d;
+            text-transform: uppercase;
+        }
+        
+        .info-value {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #6c757d;
+        }
+        
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        
+        .warning {
+            background: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #e1e8ed;
+            margin-bottom: 20px;
+        }
+        
+        .tab {
+            padding: 15px 30px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+        }
+        
+        .tab.active {
+            border-bottom-color: #667eea;
+            color: #667eea;
+            font-weight: bold;
+        }
+        
+        .tab:hover {
+            background: #f8f9fa;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .auth-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            background: #f8f9fa;
+        }
+        
+        .auth-status.authenticated {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .auth-status.not-authenticated {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .auth-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        
+        .auth-indicator.authenticated {
+            background: #28a745;
+        }
+        
+        .auth-indicator.not-authenticated {
+            background: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏈 Fantasy AI Ultimate</h1>
+            <p>AI-Powered Fantasy Sports Analysis Platform</p>
+        </div>
+        
+        <div class="main-content">
+            <!-- OAuth Status Section -->
+            <div id="auth-status-section" class="section">
+                <h2>🔐 Yahoo Fantasy Authorization</h2>
+                <div id="auth-status" class="auth-status not-authenticated">
+                    <span class="auth-indicator not-authenticated"></span>
+                    <span id="auth-status-text">Checking authorization status...</span>
+                </div>
+                <button id="authorize-btn" class="button warning" onclick="startAuthorization()" style="display: none;">
+                    🔐 Authorize with Yahoo Fantasy
+                </button>
+                <button id="check-auth-btn" class="button" onclick="checkAuthStatus()">
+                    🔄 Check Authorization Status
+                </button>
+            </div>
+            
+            <div class="tabs">
+                <div class="tab active" onclick="showTab('leagues', this)">📊 My Leagues</div>
+                <div class="tab" onclick="showTab('analysis', this)">🤖 AI Analysis</div>
+                <div class="tab" onclick="showTab('players', this)">👥 Players</div>
+            </div>
+            
+            <!-- Leagues Tab -->
+            <div id="leagues" class="tab-content active">
+                <div class="section">
+                    <h2>📊 My Fantasy Leagues</h2>
+                    <p>Load and manage your Yahoo Fantasy leagues</p>
+                    
+                    <div class="input-group">
+                        <label for="league-url">Or import by Yahoo Fantasy URL:</label>
+                        <input type="text" id="league-url" placeholder="https://football.fantasysports.yahoo.com/f1/123456">
+                        <small style="color: #6c757d; font-size: 0.9em;">Example: https://football.fantasysports.yahoo.com/f1/123456</small>
+                    </div>
+                    
+                    <button class="button" onclick="loadLeagues()">🔄 Load My Leagues</button>
+                    <button class="button" onclick="importFromUrl()">🔗 Import from URL</button>
+                    <button class="button" onclick="refreshLeagues()">🔄 Refresh</button>
+                    
+                    <div id="leagues-results" class="results">
+                        <div class="loading">
+                            <h3>🏈 Welcome to Fantasy AI Ultimate!</h3>
+                            <p>Ready to analyze your fantasy leagues! First, authorize with Yahoo Fantasy to access your real data.</p>
+                            <p><strong>Example:</strong> https://football.fantasysports.yahoo.com/f1/123456</p>
+                            <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 8px; margin-top: 20px;">
+                                <h4>📝 Yahoo OAuth2 Authorization Required:</h4>
+                                <p>To access your real Yahoo Fantasy data, you need to authorize this application:</p>
+                                <ol style="text-align: left; margin-left: 20px;">
+                                    <li>Click "Authorize with Yahoo Fantasy" above</li>
+                                    <li>Sign in to your Yahoo account</li>
+                                    <li>Grant permission to access your fantasy data</li>
+                                    <li>You'll be redirected back to this app</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Analysis Tab -->
+            <div id="analysis" class="tab-content">
+                <div class="section">
+                    <h2>🤖 AI Analysis</h2>
+                    <p>Get AI-powered insights for your players and teams</p>
+                    
+                    <div class="input-group">
+                        <label for="player-id">Player ID:</label>
+                        <input type="text" id="player-id" placeholder="Enter player ID (e.g., 12345)">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="league-id">League ID:</label>
+                        <input type="text" id="league-id" placeholder="Enter league ID">
+                    </div>
+                    
+                    <button class="button" onclick="analyzePlayer()">🔍 Analyze Player</button>
+                    <button class="button" onclick="predictPerformance()">📈 Predict Performance</button>
+                    <button class="button" onclick="optimizeTeam()">🎯 Optimize Team</button>
+                    
+                    <div id="analysis-results" class="results">
+                        <div class="loading">Enter player and league IDs to get started</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Players Tab -->
+            <div id="players" class="tab-content">
+                <div class="section">
+                    <h2>👥 League Players</h2>
+                    <p>View all players in your leagues</p>
+                    
+                    <div class="input-group">
+                        <label for="players-league-id">League ID or URL:</label>
+                        <input type="text" id="players-league-id" placeholder="Enter league ID or Yahoo Fantasy URL">
+                    </div>
+                    
+                    <button class="button" onclick="loadPlayers()">👥 Load Players</button>
+                    
+                    <div id="players-results" class="results">
+                        <div class="loading">Enter a league ID to view players</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000';
+        let isAuthenticated = false;
+        
+        // Check auth status on page load
+        window.onload = function() {
+            checkAuthStatus();
+            
+            // Check for auth callback parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const authStatus = urlParams.get('auth');
+            
+            if (authStatus === 'success') {
+                showMessage('✅ Successfully authorized with Yahoo Fantasy!', 'success');
+                checkAuthStatus();
+            } else if (authStatus === 'error') {
+                showMessage('❌ Authorization failed. Please try again.', 'error');
+            }
+        };
+        
+        function showTab(tabName, clickedElement = null) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to clicked tab if provided
+            if (clickedElement) {
+                clickedElement.classList.add('active');
+            }
+        }
+        
+        async function checkAuthStatus() {
+            const statusDiv = document.getElementById('auth-status');
+            const statusText = document.getElementById('auth-status-text');
+            const authorizeBtn = document.getElementById('authorize-btn');
+            
+            try {
+                statusText.textContent = 'Checking authorization status...';
+                
+                const response = await fetch(`${API_BASE}/auth/status`);
+                const data = await response.json();
+                
+                isAuthenticated = data.authenticated;
+                
+                if (isAuthenticated) {
+                    statusDiv.className = 'auth-status authenticated';
+                    statusDiv.querySelector('.auth-indicator').className = 'auth-indicator authenticated';
+                    statusText.textContent = '✅ Authorized with Yahoo Fantasy';
+                    authorizeBtn.style.display = 'none';
+                } else {
+                    statusDiv.className = 'auth-status not-authenticated';
+                    statusDiv.querySelector('.auth-indicator').className = 'auth-indicator not-authenticated';
+                    statusText.textContent = '❌ Not authorized with Yahoo Fantasy';
+                    authorizeBtn.style.display = 'inline-block';
+                }
+            } catch (error) {
+                statusDiv.className = 'auth-status not-authenticated';
+                statusDiv.querySelector('.auth-indicator').className = 'auth-indicator not-authenticated';
+                statusText.textContent = '❌ Error checking authorization status';
+                authorizeBtn.style.display = 'inline-block';
+                console.error('Error checking auth status:', error);
+            }
+        }
+        
+        async function startAuthorization() {
+            try {
+                const authorizeBtn = document.getElementById('authorize-btn');
+                authorizeBtn.disabled = true;
+                authorizeBtn.textContent = '🔄 Generating authorization URL...';
+                
+                const response = await fetch(`${API_BASE}/auth/authorize`);
+                const data = await response.json();
+                
+                if (data.authorization_url) {
+                    // Redirect to Yahoo authorization page
+                    window.location.href = data.authorization_url;
+                } else {
+                    throw new Error('No authorization URL received');
+                }
+            } catch (error) {
+                showMessage(`❌ Error starting authorization: ${error.message}`, 'error');
+                const authorizeBtn = document.getElementById('authorize-btn');
+                authorizeBtn.disabled = false;
+                authorizeBtn.textContent = '🔐 Authorize with Yahoo Fantasy';
+            }
+        }
+        
+        function showMessage(message, type = 'info') {
+            const resultsDiv = document.getElementById('leagues-results');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = type;
+            messageDiv.textContent = message;
+            resultsDiv.innerHTML = '';
+            resultsDiv.appendChild(messageDiv);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                if (messageDiv.parentNode) {
+                    messageDiv.remove();
+                }
+            }, 5000);
+        }
+        
+        async function loadLeagues() {
+            const resultsDiv = document.getElementById('leagues-results');
+            
+            if (!isAuthenticated) {
+                resultsDiv.innerHTML = '<div class="warning">⚠️ Please authorize with Yahoo Fantasy first to load your real leagues.</div>';
+                return;
+            }
+            
+            resultsDiv.innerHTML = '<div class="loading">Loading your leagues...</div>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/yahoo/leagues`);
+                const data = await response.json();
+                
+                if (data.leagues && data.leagues.length > 0) {
+                    let html = '<h3>Your Leagues:</h3>';
+                    data.leagues.forEach(league => {
+                        html += `
+                            <div class="league-card" onclick="selectLeague('${league.league_id}')">
+                                <h3>${league.name}</h3>
+                                <div class="league-info">
+                                    <div class="info-item">
+                                        <div class="info-label">Sport</div>
+                                        <div class="info-value">${league.sport.toUpperCase()}</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">Season</div>
+                                        <div class="info-value">${league.season}</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">Teams</div>
+                                        <div class="info-value">${league.num_teams}</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">Type</div>
+                                        <div class="info-value">${league.scoring_type}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    resultsDiv.innerHTML = html;
+                } else {
+                    resultsDiv.innerHTML = '<div class="error">No leagues found. Please check your Yahoo Fantasy account.</div>';
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="error">Error loading leagues: ${error.message}</div>`;
+            }
+        }
+        
+        function selectLeague(leagueId) {
+            // Fill in the league ID in other tabs
+            document.getElementById('league-id').value = leagueId;
+            document.getElementById('players-league-id').value = leagueId;
+            
+            // Show success message
+            const resultsDiv = document.getElementById('leagues-results');
+            resultsDiv.innerHTML = `<div class="success">✅ League ${leagueId} selected! You can now use it in other tabs.</div>`;
+            
+            // Switch to analysis tab
+            setTimeout(() => {
+                const analysisTab = document.querySelector('.tab[onclick*="analysis"]');
+                showTab('analysis', analysisTab);
+            }, 1000);
+        }
+        
+        function refreshLeagues() {
+            loadLeagues();
+        }
+        
+        function importFromUrl() {
+            const url = document.getElementById('league-url').value;
+            const resultsDiv = document.getElementById('leagues-results');
+            
+            if (!url) {
+                resultsDiv.innerHTML = '<div class="error">Please enter a Yahoo Fantasy URL</div>';
+                return;
+            }
+            
+            // Extract league ID from Yahoo Fantasy URL
+            const leagueId = extractLeagueIdFromUrl(url);
+            
+            if (!leagueId) {
+                resultsDiv.innerHTML = '<div class="error">Could not extract league ID from URL. Please check the format.</div>';
+                return;
+            }
+            
+            resultsDiv.innerHTML = '<div class="loading">Importing league from URL...</div>';
+            
+            // Load league info using the extracted ID
+            loadLeagueFromId(leagueId);
+        }
+        
+        function extractLeagueIdFromUrl(url) {
+            // Handle different Yahoo Fantasy URL formats
+            const patterns = [
+                /\/f1\/(\d+)/,  // football.fantasysports.yahoo.com/f1/123456
+                /\/b1\/(\d+)/,  // basketball.fantasysports.yahoo.com/b1/123456
+                /\/h1\/(\d+)/,  // hockey.fantasysports.yahoo.com/h1/123456
+                /\/baseball\/(\d+)/,  // baseball.fantasysports.yahoo.com/baseball/123456
+                /league\/(\d+)/,  // Generic league pattern
+                /(\d{6,})/  // Any 6+ digit number (fallback)
+            ];
+            
+            for (const pattern of patterns) {
+                const match = url.match(pattern);
+                if (match) {
+                    return match[1];
+                }
+            }
+            
+            return null;
+        }
+        
+        async function loadLeagueFromId(leagueId) {
+            const resultsDiv = document.getElementById('leagues-results');
+            
+            try {
+                const response = await fetch(`${API_BASE}/yahoo/league/${leagueId}`);
+                const league = await response.json();
+                
+                if (league && league.league_id) {
+                    let html = '<h3>Imported League:</h3>';
+                    html += `
+                        <div class="league-card" onclick="selectLeague('${league.league_id}')">
+                            <h3>${league.name}</h3>
+                            <div class="league-info">
+                                <div class="info-item">
+                                    <div class="info-label">Sport</div>
+                                    <div class="info-value">${league.sport.toUpperCase()}</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Season</div>
+                                    <div class="info-value">${league.season}</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Teams</div>
+                                    <div class="info-value">${league.num_teams}</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Type</div>
+                                    <div class="info-value">${league.scoring_type}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    resultsDiv.innerHTML = html;
+                } else {
+                    resultsDiv.innerHTML = '<div class="error">Could not load league information. Please check the URL and try again.</div>';
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="error">Error importing league: ${error.message}</div>`;
+            }
+        }
+        
+        async function analyzePlayer() {
+            const playerId = document.getElementById('player-id').value;
+            const leagueId = document.getElementById('league-id').value;
+            const resultsDiv = document.getElementById('analysis-results');
+            
+            if (!playerId || !leagueId) {
+                resultsDiv.innerHTML = '<div class="error">Please enter both Player ID and League ID</div>';
+                return;
+            }
+            
+            resultsDiv.innerHTML = '<div class="loading">Analyzing player...</div>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/ai/analyze-player?player_id=${playerId}&league_id=${leagueId}`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                let html = '<h3>AI Analysis Results:</h3>';
+                html += `<div class="league-card">
+                    <h3>Player Analysis</h3>
+                    <div class="league-info">
+                        <div class="info-item">
+                            <div class="info-label">Confidence</div>
+                            <div class="info-value">${(data.confidence_score * 100).toFixed(1)}%</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Next Game</div>
+                            <div class="info-value">${data.prediction.next_game_points.toFixed(1)} pts</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Injury Risk</div>
+                            <div class="info-value">${data.prediction.injury_risk}</div>
+                        </div>
+                    </div>
+                    <h4>Insights:</h4>
+                    <ul>${data.insights.map(insight => `<li>${insight}</li>`).join('')}</ul>
+                    <h4>Recommendations:</h4>
+                    <ul>${data.recommendations.map(rec => `<li>${rec}</li>`).join('')}</ul>
+                </div>`;
+                
+                resultsDiv.innerHTML = html;
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="error">Error analyzing player: ${error.message}</div>`;
+            }
+        }
+        
+        async function loadPlayers() {
+            let leagueId = document.getElementById('players-league-id').value;
+            const resultsDiv = document.getElementById('players-results');
+            
+            if (!leagueId) {
+                resultsDiv.innerHTML = '<div class="error">Please enter a League ID or Yahoo Fantasy URL</div>';
+                return;
+            }
+            
+            // If user entered a full URL, extract the league ID
+            if (leagueId.includes('fantasysports.yahoo.com')) {
+                const extractedId = extractLeagueIdFromUrl(leagueId);
+                if (extractedId) {
+                    leagueId = extractedId;
+                } else {
+                    resultsDiv.innerHTML = '<div class="error">Could not extract league ID from URL. Please check the format.</div>';
+                    return;
+                }
+            }
+            
+            resultsDiv.innerHTML = '<div class="loading">Loading players...</div>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/yahoo/players/${leagueId}`);
+                const data = await response.json();
+                
+                if (data.players && data.players.length > 0) {
+                    let html = '<h3>League Players:</h3>';
+                    data.players.forEach(player => {
+                        html += `
+                            <div class="league-card">
+                                <h3>${player.name}</h3>
+                                <div class="league-info">
+                                    <div class="info-item">
+                                        <div class="info-label">Position</div>
+                                        <div class="info-value">${player.position}</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">Team</div>
+                                        <div class="info-value">${player.team}</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">Points</div>
+                                        <div class="info-value">${player.points.toFixed(1)}</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">Avg</div>
+                                        <div class="info-value">${player.avg_points.toFixed(1)}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    resultsDiv.innerHTML = html;
+                } else {
+                    resultsDiv.innerHTML = '<div class="error">No players found for this league.</div>';
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="error">Error loading players: ${error.message}</div>`;
+            }
+        }
+        
+        async function predictPerformance() {
+            const playerId = document.getElementById('player-id').value;
+            const leagueId = document.getElementById('league-id').value;
+            const resultsDiv = document.getElementById('analysis-results');
+            
+            if (!playerId || !leagueId) {
+                resultsDiv.innerHTML = '<div class="error">Please enter both Player ID and League ID</div>';
+                return;
+            }
+            
+            resultsDiv.innerHTML = '<div class="loading">Predicting performance...</div>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/ai/predict-performance?player_id=${playerId}&league_id=${leagueId}`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                let html = '<h3>Performance Prediction:</h3>';
+                html += `<div class="league-card">
+                    <h3>Prediction Results</h3>
+                    <div class="league-info">
+                        <div class="info-item">
+                            <div class="info-label">Next Game</div>
+                            <div class="info-value">${data.next_game_prediction.toFixed(1)} pts</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Risk Level</div>
+                            <div class="info-value">${data.risk_assessment}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Historical Avg</div>
+                            <div class="info-value">${data.historical_avg.toFixed(1)}</div>
+                        </div>
+                    </div>
+                    <h4>Factors:</h4>
+                    <ul>${data.factors.map(factor => `<li>${factor}</li>`).join('')}</ul>
+                </div>`;
+                
+                resultsDiv.innerHTML = html;
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="error">Error predicting performance: ${error.message}</div>`;
+            }
+        }
+        
+        async function optimizeTeam() {
+            const leagueId = document.getElementById('league-id').value;
+            const resultsDiv = document.getElementById('analysis-results');
+            
+            if (!leagueId) {
+                resultsDiv.innerHTML = '<div class="error">Please enter a League ID</div>';
+                return;
+            }
+            
+            resultsDiv.innerHTML = '<div class="loading">Optimizing team...</div>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/ai/team-optimization?league_id=${leagueId}&team_id=1`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                let html = '<h3>Team Optimization:</h3>';
+                html += `<div class="league-card">
+                    <h3>Optimization Results</h3>
+                    <div class="league-info">
+                        <div class="info-item">
+                            <div class="info-label">Current Score</div>
+                            <div class="info-value">${data.current_score.toFixed(1)}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Optimized Score</div>
+                            <div class="info-value">${data.optimized_score.toFixed(1)}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Improvement</div>
+                            <div class="info-value">+${((data.optimized_score - data.current_score) / data.current_score * 100).toFixed(1)}%</div>
+                        </div>
+                    </div>
+                    <h4>Reasoning:</h4>
+                    <ul>${data.reasoning.map(reason => `<li>${reason}</li>`).join('')}</ul>
+                </div>`;
+                
+                resultsDiv.innerHTML = html;
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="error">Error optimizing team: ${error.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html> 

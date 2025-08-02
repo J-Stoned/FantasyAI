@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python:*)",
+      "Bash(set PYTHONPATH=C:UsersjustiOneDriveDocumentsGitHubF-AI-PRODmerged-fantasy-projectfantasy-ai-mergedsrc)",
+      "Bash(curl:*)",
+      "Bash(pip install:*)",
+      "Bash(ngrok:*)",
+      "Bash(dir:*)",
+      "Bash(git init:*)",
+      "Bash(git add:*)"
+    ],
+    "deny": []
+  }
+}

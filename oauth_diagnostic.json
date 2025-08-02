@@ -1,0 +1,102 @@
+{
+  "timestamp": "2025-08-02T11:56:44.801418",
+  "environment_variables": {
+    "yahoo_client_id": {
+      "set": false,
+      "value": "NOT_SET",
+      "length": 0
+    },
+    "yahoo_client_secret": {
+      "set": false,
+      "value": "NOT_SET",
+      "length": 0
+    },
+    "yahoo_redirect_uri": {
+      "set": false,
+      "value": "NOT_SET"
+    },
+    "env_file": {
+      "exists": true,
+      "path": "C:\\Users\\justi\\OneDrive\\Documents\\GitHub\\F-AI-PROD\\merged-fantasy-project\\fantasy-ai-merged\\.env"
+    }
+  },
+  "yahoo_api_configuration": {
+    "client_id": {
+      "set": true,
+      "value": "dj0yJmk9cGw4M25lT3VV...",
+      "length": 96
+    },
+    "client_secret": {
+      "set": true,
+      "value": "***ddb7",
+      "length": 40
+    },
+    "redirect_uri": {
+      "set": true,
+      "value": "http://localhost:8000/auth/callback"
+    },
+    "auth_url": "https://api.login.yahoo.com/oauth2/request_auth",
+    "token_url": "https://api.login.yahoo.com/oauth2/get_token",
+    "base_url": "https://fantasysports.yahooapis.com/fantasy/v2"
+  },
+  "oauth_url_generation": {
+    "success": true,
+    "auth_url": "http://localhost:8000/auth/mock-callback?state=I3gkRiA70jlaSbMBsgpb_dOzdKxufnMARBI9qPBZNFk&code=mock_auth_code_12345",
+    "url_length": 116,
+    "is_mock": true
+  },
+  "api_endpoints": {
+    "auth_url": {
+      "reachable": true,
+      "status_code": 200,
+      "content_length": 7950
+    },
+    "token_url": {
+      "reachable": true,
+      "status_code": 404,
+      "content_length": 86
+    },
+    "base_url": {
+      "reachable": true,
+      "status_code": 401,
+      "content_length": 285
+    }
+  },
+  "redirect_uri_registration": {
+    "redirect_uri": "http://localhost:8000/auth/callback",
+    "scheme": "http",
+    "netloc": "localhost:8000",
+    "path": "/auth/callback",
+    "is_localhost": true,
+    "port": 8000,
+    "recommendations": []
+  },
+  "recommendations": {
+    "immediate_actions": [
+      "Set YAHOO_CLIENT_ID environment variable",
+      "Set YAHOO_CLIENT_SECRET environment variable"
+    ],
+    "configuration_fixes": [],
+    "development_setup": [
+      "Ensure your application is running on the correct port",
+      "Verify that the redirect URI matches exactly in Yahoo Developer Console",
+      "Test OAuth flow with a simple callback endpoint",
+      "Use mock OAuth flow for development if needed"
+    ],
+    "production_considerations": [
+      "Use HTTPS for production redirect URIs",
+      "Implement proper state parameter validation",
+      "Add error handling for OAuth failures",
+      "Implement token refresh logic",
+      "Use secure storage for tokens"
+    ]
+  },
+  "summary": {
+    "total_issues": 2,
+    "issues": [
+      "Missing YAHOO_CLIENT_ID",
+      "Missing YAHOO_CLIENT_SECRET"
+    ],
+    "status": "FAILED"
+  }
+}

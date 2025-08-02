@@ -1,0 +1,39 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <PackageId>YahooFantasyWrapper</PackageId>
+    <Title>YahooFantasyWrapper</Title>
+    <PackageVersion>1.2.0</PackageVersion>
+    <LicenseUrl>https://github.com/isaac2004/YahooFantasyWrapper/blob/master/LICENSE.md</LicenseUrl>
+    <ProjectUrl>https://github.com/isaac2004/YahooFantasyWrapper</ProjectUrl>
+    <Authors>Isaac Levin</Authors>
+    <Description>Wrapper for Yahoo! Fantasy Sports Api</Description>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <PackageReleaseNotes>Added New Models and cleaned up bugs</PackageReleaseNotes>
+    <Copyright>Copyright Isaac Levin. All rights reserved.</Copyright>
+    <PackageTags>yahoo fantasy sports</PackageTags>
+    <Version>1.2.0</Version>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageLicenseUrl>https://github.com/isaac2004/YahooFantasyWrapper/blob/master/LICENSE.md</PackageLicenseUrl>
+    <PackageProjectUrl>https://github.com/isaac2004/YahooFantasyWrapper/</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/isaac2004/YahooFantasyWrapper/blob/master/LICENSE.md</RepositoryUrl>
+    <NeutralLanguage>en</NeutralLanguage>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DocumentationFile>bin\Debug\netstandard2.0\YahooFantasyWrapper.xml</DocumentationFile>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DocumentationFile>bin\Release\netstandard2.0\YahooFantasyWrapper.xml</DocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Options">
+      <Version>2.0.0</Version>
+    </PackageReference>
+    <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
+    <PackageReference Include="System.Text.Encodings.Web" Version="4.4.0" />
+  </ItemGroup>
+</Project>
