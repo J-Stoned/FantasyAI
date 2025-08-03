@@ -17,7 +17,7 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
-from shared.models import PlayerStats, LeagueInfo, TeamInfo, SportType, Position
+from src.shared.models import PlayerStats, LeagueInfo, TeamInfo, SportType, Position
 
 logger = logging.getLogger(__name__)
 

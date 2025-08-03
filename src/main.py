@@ -11,10 +11,10 @@ import logging
 from typing import List, Dict, Any
 from datetime import datetime, timedelta
 
-from shared.database import DatabaseManager
-from shared.ai_engine import AIAnalysisEngine
-from yahoo_wrapper import YahooFantasyAPI
-from monitoring import metrics_middleware, get_health_status, metrics
+from src.shared.database import DatabaseManager
+from src.shared.ai_engine import AIAnalysisEngine
+from src.yahoo_wrapper import YahooFantasyAPI
+from src.monitoring import metrics_middleware, get_health_status, metrics
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
