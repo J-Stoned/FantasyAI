@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 import logging
 import os
 
-from shared.models import PlayerStats, AIAnalysis, PerformancePrediction, TeamOptimization
+from src.shared.models import PlayerStats, AIAnalysis, PerformancePrediction, TeamOptimization
 
 logger = logging.getLogger(__name__)
 
