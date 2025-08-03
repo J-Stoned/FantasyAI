@@ -72,7 +72,7 @@ async def api_root():
     """API root endpoint"""
     return {
         "message": "Fantasy AI Ultimate API",
-        "version": "1.0.0",
+        "version": "1.0.1",
         "endpoints": {
             "yahoo": "/yahoo/*",
             "ai": "/ai/*",
