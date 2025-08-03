@@ -18,6 +18,8 @@ sqlalchemy>=1.4.0
 alembic>=1.8.0
 psycopg2-binary>=2.9.0
 redis>=4.3.0
+asyncpg>=0.27.0
+aiosqlite>=0.18.0
 
 # AI and ML dependencies (optional for initial setup)
 # scikit-learn>=1.1.0
