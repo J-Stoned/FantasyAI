@@ -91,13 +91,13 @@ class DatabaseManager:
         
     async def initialize(self):
         """Initialize database connections"""
-        try:
-            # In production, check if DATABASE_URL is provided
-            if os.getenv("ENVIRONMENT") == "production" and not os.getenv("DATABASE_URL"):
-                logger.warning("Running in production without database - using in-memory mode")
-                self.is_initialized = True
-                return
+        # In production, check if DATABASE_URL is provided
+        if os.getenv("ENVIRONMENT") == "production" and not os.getenv("DATABASE_URL"):
+            logger.warning("Running in production without database - using in-memory mode")
+            self.is_initialized = True
+            return
             
+        try:
             # Initialize PostgreSQL connection
             await self._initialize_postgresql()
             
@@ -216,6 +216,10 @@ class DatabaseManager:
             if not self.is_initialized:
                 await self.initialize()
             
+            if not self.SessionLocal:
+                logger.warning("Database not available - skipping save")
+                return
+            
             async with self.SessionLocal() as session:
                 # Check if player exists
                 existing_player = await session.get(PlayerData, player_data['player_id'])
@@ -250,6 +254,10 @@ class DatabaseManager:
             cached_data = await self._get_cached_player_data(player_id)
             if cached_data:
                 return cached_data
+            
+            if not self.SessionLocal:
+                logger.warning("Database not available - returning None")
+                return None
             
             # Get from database
             async with self.SessionLocal() as session:
@@ -289,6 +297,10 @@ class DatabaseManager:
             if not self.is_initialized:
                 await self.initialize()
             
+            if not self.SessionLocal:
+                logger.warning("Database not available - skipping save")
+                return
+            
             async with self.SessionLocal() as session:
                 existing_league = await session.get(LeagueData, league_data['league_id'])
                 
@@ -313,6 +325,10 @@ class DatabaseManager:
             if not self.is_initialized:
                 await self.initialize()
             
+            if not self.SessionLocal:
+                logger.warning("Database not available - skipping save")
+                return
+            
             async with self.SessionLocal() as session:
                 existing_team = await session.get(TeamData, team_data['team_id'])
                 
@@ -336,6 +352,10 @@ class DatabaseManager:
         try:
             if not self.is_initialized:
                 await self.initialize()
+            
+            if not self.SessionLocal:
+                logger.warning("Database not available - skipping save")
+                return
             
             async with self.SessionLocal() as session:
                 new_analysis = AIAnalysisData(**analysis_data)
@@ -381,6 +401,10 @@ class DatabaseManager:
             if not self.is_initialized:
                 await self.initialize()
             
+            if not self.SessionLocal:
+                logger.warning("Database not available - returning empty list")
+                return []
+            
             async with self.SessionLocal() as session:
                 players = await session.query(PlayerData).filter(
                     PlayerData.league_id == league_id
@@ -410,6 +434,10 @@ class DatabaseManager:
         try:
             if not self.is_initialized:
                 await self.initialize()
+            
+            if not self.SessionLocal:
+                logger.warning("Database not available - returning empty list")
+                return []
             
             async with self.SessionLocal() as session:
                 teams = await session.query(TeamData).filter(
