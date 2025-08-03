@@ -50,15 +50,7 @@ app.mount("/static", StaticFiles(directory="src/static"), name="static")
 @app.on_event("startup")
 async def startup_event():
     """Initialize database and AI engine on startup"""
-    import os
-    
-    # In production without DATABASE_URL, skip database initialization
-    if os.getenv("ENVIRONMENT") == "production" and not os.getenv("DATABASE_URL"):
-        logger.warning("Running in production without DATABASE_URL - skipping database initialization")
-        db_manager.is_initialized = True
-    else:
-        await db_manager.initialize()
-    
+    await db_manager.initialize()
     await ai_engine.initialize()
 
 @app.on_event("shutdown")

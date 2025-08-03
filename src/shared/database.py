@@ -91,12 +91,6 @@ class DatabaseManager:
         
     async def initialize(self):
         """Initialize database connections"""
-        # In production, check if DATABASE_URL is provided
-        if os.getenv("ENVIRONMENT") == "production" and not os.getenv("DATABASE_URL"):
-            logger.warning("Running in production without database - using in-memory mode")
-            self.is_initialized = True
-            return
-            
         try:
             # Initialize PostgreSQL connection
             await self._initialize_postgresql()
@@ -112,12 +106,7 @@ class DatabaseManager:
             
         except Exception as e:
             logger.error(f"Failed to initialize Database Manager: {e}")
-            # In production, continue without database for OAuth testing
-            if os.getenv("ENVIRONMENT") == "production":
-                logger.warning("Continuing without database in production mode")
-                self.is_initialized = True
-            else:
-                raise
+            raise
     
     async def _initialize_postgresql(self):
         """Initialize PostgreSQL connection"""

@@ -1,7 +1,0 @@
-# Force Render Rebuild
-# This file forces Render to rebuild from scratch
-# Created: 2025-08-03 11:50 AM EST
-# Reason: Render is using cached build with old database initialization code
-
-REBUILD_TIMESTAMP=2025-08-03T11:50:00-05:00
-REBUILD_REASON=force_fresh_build_for_database_fix
