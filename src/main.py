@@ -15,6 +15,7 @@ from src.shared.database import DatabaseManager
 from src.shared.ai_engine import AIAnalysisEngine
 from src.yahoo_wrapper import YahooFantasyAPI
 from src.monitoring import metrics_middleware, get_health_status, metrics
+from src.unified_data_service import unified_data
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -52,6 +53,8 @@ async def startup_event():
     """Initialize database and AI engine on startup"""
     await db_manager.initialize()
     await ai_engine.initialize()
+    await unified_data.initialize()
+    logger.info("All services initialized successfully")
 
 @app.on_event("shutdown")
 async def shutdown_event():
@@ -345,6 +348,150 @@ async def optimize_team(league_id: str = Query(...), team_id: str = Query(...)):
         return optimization
     except Exception as e:
         logger.error(f"Error optimizing team: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Desktop Database Endpoints
+@app.get("/desktop/status")
+async def desktop_database_status():
+    """Check desktop database connection status"""
+    try:
+        is_connected = await unified_data.desktop_db.test_connection()
+        
+        if is_connected:
+            stats = await unified_data.desktop_db.get_database_stats()
+            return {
+                "connected": True,
+                "database": "fantasy_ai_local",
+                "host": unified_data.desktop_db.desktop_url.split("@")[1].split("/")[0] if unified_data.desktop_db.desktop_url else None,
+                "statistics": stats
+            }
+        else:
+            return {
+                "connected": False,
+                "error": "Unable to connect to desktop database"
+            }
+    except Exception as e:
+        logger.error(f"Error checking desktop database status: {e}")
+        return {
+            "connected": False,
+            "error": str(e)
+        }
+
+@app.get("/desktop/players/{sport}")
+async def get_desktop_players(
+    sport: str,
+    player_name: str = Query(None, description="Player name to search"),
+    limit: int = Query(100, description="Number of results to return")
+):
+    """Get player data from desktop database"""
+    try:
+        players = await unified_data.desktop_db.get_player_stats(
+            sport=sport.upper(),
+            player_name=player_name,
+            limit=limit
+        )
+        
+        return {
+            "sport": sport.upper(),
+            "count": len(players),
+            "players": players
+        }
+    except Exception as e:
+        logger.error(f"Error getting desktop players: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/desktop/dfs-slate/{sport}")
+async def get_dfs_slate(
+    sport: str,
+    platform: str = Query("draftkings", description="DFS platform"),
+    date: str = Query(None, description="Slate date (YYYY-MM-DD)")
+):
+    """Get DFS slate data from desktop database"""
+    try:
+        from datetime import datetime
+        
+        slate_date = None
+        if date:
+            slate_date = datetime.strptime(date, "%Y-%m-%d").date()
+            
+        slate_data = await unified_data.get_dfs_slate(
+            sport=sport.upper(),
+            slate_date=slate_date,
+            platform=platform
+        )
+        
+        return slate_data
+    except Exception as e:
+        logger.error(f"Error getting DFS slate: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/desktop/injuries")
+async def get_injury_reports():
+    """Get current injury reports from desktop database"""
+    try:
+        injuries = await unified_data.desktop_db.get_injury_reports()
+        
+        # Group by sport
+        by_sport = {}
+        for injury in injuries:
+            sport = injury["sport"]
+            if sport not in by_sport:
+                by_sport[sport] = []
+            by_sport[sport].append(injury)
+        
+        return {
+            "total_injuries": len(injuries),
+            "by_sport": by_sport,
+            "last_updated": datetime.now().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Error getting injury reports: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/unified/player/{player_name}")
+async def get_unified_player_data(
+    player_name: str,
+    sport: str = Query(None, description="Sport (NFL, NBA, MLB, NHL)"),
+    include_stats: bool = Query(True, description="Include recent stats"),
+    include_projections: bool = Query(True, description="Include ML projections")
+):
+    """Get comprehensive player data from all sources"""
+    try:
+        player_data = await unified_data.get_player_data(
+            player_name=player_name,
+            sport=sport,
+            include_stats=include_stats,
+            include_projections=include_projections
+        )
+        
+        return player_data
+    except Exception as e:
+        logger.error(f"Error getting unified player data: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/unified/optimization/{sport}")
+async def get_optimization_data(
+    sport: str,
+    contest_type: str = Query("main", description="Contest type"),
+    date: str = Query(None, description="Contest date (YYYY-MM-DD)")
+):
+    """Get optimization data for lineup building"""
+    try:
+        from datetime import datetime
+        
+        contest_date = None
+        if date:
+            contest_date = datetime.strptime(date, "%Y-%m-%d").date()
+            
+        optimization_data = await unified_data.get_optimization_data(
+            sport=sport.upper(),
+            contest_type=contest_type,
+            slate_date=contest_date
+        )
+        
+        return optimization_data
+    except Exception as e:
+        logger.error(f"Error getting optimization data: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":

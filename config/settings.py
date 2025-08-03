@@ -17,12 +17,14 @@ class Settings(BaseSettings):
     
     # Database
     database_url: str = "sqlite+aiosqlite:///./fantasy_ai.db"
+    desktop_database_url: Optional[str] = None
+    enable_desktop_sync: bool = False
     redis_url: Optional[str] = "redis://localhost:6379"
     
     # Yahoo Fantasy API
     yahoo_client_id: Optional[str] = None
     yahoo_client_secret: Optional[str] = None
-    yahoo_redirect_uri: str = "http://localhost:8000/auth/callback"
+    yahoo_redirect_uri: str = "https://fantasyai.onrender.com/auth/callback"
     
     # AI/ML Settings
     model_cache_dir: str = "./models"
@@ -91,6 +93,11 @@ settings.redis_url = get_redis_url()
 # Yahoo API credentials
 settings.yahoo_client_id = os.getenv("YAHOO_CLIENT_ID")
 settings.yahoo_client_secret = os.getenv("YAHOO_CLIENT_SECRET")
+settings.yahoo_redirect_uri = os.getenv("YAHOO_REDIRECT_URI", settings.yahoo_redirect_uri)
+
+# Desktop database configuration
+settings.desktop_database_url = os.getenv("DESKTOP_DATABASE_URL")
+settings.enable_desktop_sync = os.getenv("ENABLE_DESKTOP_SYNC", "false").lower() == "true"
 
 # Security
 settings.secret_key = os.getenv("SECRET_KEY", "dev-secret-key-change-in-production") 

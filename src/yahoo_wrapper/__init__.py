@@ -1,10 +1,11 @@
 """
 Yahoo Fantasy API Wrapper for Fantasy AI Ultimate merged project
+Enhanced with comprehensive error handling, caching, and all resource types
 """
 
 import asyncio
 import logging
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Union
 import os
 from datetime import datetime, timedelta
 import requests
@@ -19,13 +20,22 @@ from dotenv import load_dotenv
 load_dotenv(override=False)
 
 from src.shared.models import PlayerStats, LeagueInfo, TeamInfo, SportType, Position
+from .api_client import YahooFantasyClient
+from .response_parser import YahooResponseParser
+from .cache import create_cache, YahooAPICache
+from .exceptions import (
+    YahooFantasyError,
+    YahooAuthenticationError,
+    YahooTokenExpiredError,
+    YahooErrorHandler
+)
 
 logger = logging.getLogger(__name__)
 
 class YahooFantasyAPI:
-    """Yahoo Fantasy Sports API wrapper"""
+    """Enhanced Yahoo Fantasy Sports API wrapper with caching and error handling"""
     
-    def __init__(self):
+    def __init__(self, cache_type: str = "memory", cache_config: Dict[str, Any] = None):
         # Yahoo OAuth2 configuration - load from environment
         self.client_id = os.getenv("YAHOO_CLIENT_ID", "")
         self.client_secret = os.getenv("YAHOO_CLIENT_SECRET", "")
@@ -53,7 +63,12 @@ class YahooFantasyAPI:
         self.token_url = "https://api.login.yahoo.com/oauth2/get_token"
         self.base_url = "https://fantasysports.yahooapis.com/fantasy/v2"
         
-        logger.info("Yahoo OAuth2 API wrapper initialized")
+        # Initialize enhanced components
+        self.api_client = None
+        self.cache = create_cache(cache_type, **(cache_config or {}))
+        self.parser = YahooResponseParser()
+        
+        logger.info(f"Yahoo OAuth2 API wrapper initialized with {cache_type} cache")
     
     def get_authorization_url(self) -> str:
         """Generate Yahoo OAuth2 authorization URL"""
@@ -271,6 +286,16 @@ class YahooFantasyAPI:
             logger.error(f"Error ensuring valid token: {e}")
             return False
     
+    async def _get_api_client(self) -> YahooFantasyClient:
+        """Get or create API client instance"""
+        if not self.api_client and self.access_token:
+            self.api_client = YahooFantasyClient(self.access_token, self.refresh_token)
+        elif self.api_client and self.access_token:
+            # Update token if changed
+            self.api_client.access_token = self.access_token
+            self.api_client.refresh_token = self.refresh_token
+        return self.api_client
+    
     async def authenticate(self):
         """Authenticate with Yahoo Fantasy API"""
         try:
@@ -292,40 +317,58 @@ class YahooFantasyAPI:
             raise
     
     async def get_user_leagues(self) -> List[Dict[str, Any]]:
-        """Get user's Yahoo Fantasy leagues"""
+        """Get user's Yahoo Fantasy leagues with caching"""
         try:
             logger.info("Starting get_user_leagues request")
+            
+            # Check cache first
+            cache_key = "user_leagues"
+            cached_data = await self.cache.get("leagues", cache_key, {"game_keys": "nfl,nba,mlb,nhl"})
+            if cached_data:
+                logger.info("Returning cached user leagues data")
+                return cached_data
             
             # Ensure we have a valid token
             if not await self.ensure_valid_token():
                 logger.error("No valid access token for API request")
                 return []
             
-            # Make real API call to Yahoo
+            # Get API client
+            client = await self._get_api_client()
+            if not client:
+                logger.error("Failed to get API client")
+                return []
+            
             try:
                 logger.info("Making Yahoo API call for user leagues...")
-                response = await self._make_api_request("users;use_login=1/games;game_keys=nfl,nba,mlb,nhl/leagues")
-                
-                logger.info(f"Yahoo API response received: {type(response)}")
-                if response and 'fantasy_content' in response:
-                    logger.info("Parsing Yahoo response...")
-                    leagues = self._parse_yahoo_leagues_response(response)
+                async with client:
+                    response = await client.get_user_leagues()
+                    
+                    # Parse response
+                    leagues = self.parser.extract_collection(response, 'leagues')
+                    
                     if leagues:
-                        logger.info(f"Successfully parsed {len(leagues)} leagues")
+                        logger.info(f"Successfully retrieved {len(leagues)} leagues")
+                        # Cache the result
+                        await self.cache.set("leagues", cache_key, leagues, {"game_keys": "nfl,nba,mlb,nhl"})
                         return leagues
                     else:
-                        logger.warning("No leagues found in parsed response")
+                        logger.warning("No leagues found in response")
                         return []
-                else:
-                    logger.warning(f"Invalid response format: {response}")
-                    return []
+                        
+            except YahooFantasyError as e:
+                logger.error(f"Yahoo API error: {e}")
+                if YahooErrorHandler.is_retryable(e):
+                    logger.info("Error is retryable")
+                raise
             except Exception as e:
-                logger.error(f"Failed to get Yahoo leagues data: {e}")
+                logger.error(f"Unexpected error getting leagues: {e}")
                 raise
             
         except Exception as e:
             logger.error(f"Error getting user leagues: {e}")
-            raise
+            # Return empty list instead of raising for backwards compatibility
+            return []
     
     async def get_league_info(self, league_id: str) -> Dict[str, Any]:
         """Get specific league information"""
@@ -898,6 +941,202 @@ class YahooFantasyAPI:
         except Exception as e:
             logger.error(f"Error getting league stats: {e}")
             raise
+    
+    # New enhanced methods using the API client
+    async def get_league_transactions(
+        self, 
+        league_id: str,
+        transaction_types: List[str] = None,
+        team_key: str = None,
+        count: int = 25
+    ) -> List[Dict[str, Any]]:
+        """Get league transactions with filtering"""
+        try:
+            if not await self.ensure_valid_token():
+                return []
+                
+            client = await self._get_api_client()
+            if not client:
+                return []
+                
+            async with client:
+                response = await client.get_league_transactions(
+                    league_id,
+                    transaction_types=transaction_types,
+                    team_key=team_key,
+                    count=count
+                )
+                
+                transactions = self.parser.extract_collection(response, 'transactions')
+                return transactions
+                
+        except Exception as e:
+            logger.error(f"Error getting league transactions: {e}")
+            return []
+    
+    async def update_roster(
+        self,
+        team_key: str,
+        roster_changes: List[Dict[str, str]],
+        coverage_type: str = "week",
+        coverage_value: Union[int, str] = None
+    ) -> bool:
+        """Update team roster (set lineups)"""
+        try:
+            if not await self.ensure_valid_token():
+                raise YahooAuthenticationError("No valid access token")
+                
+            client = await self._get_api_client()
+            if not client:
+                raise YahooFantasyError("Failed to get API client")
+                
+            # Use current week/date if not specified
+            if not coverage_value:
+                if coverage_type == "week":
+                    # Get current week from league info
+                    league_key = team_key.rsplit('.t.', 1)[0]
+                    league_info = await self.get_league_info(league_key)
+                    coverage_value = league_info.get('current_week', 1)
+                else:
+                    coverage_value = datetime.now().strftime("%Y-%m-%d")
+                    
+            async with client:
+                response = await client.update_roster(
+                    team_key,
+                    coverage_type,
+                    coverage_value,
+                    roster_changes
+                )
+                
+                return response is not None
+                
+        except Exception as e:
+            logger.error(f"Error updating roster: {e}")
+            raise
+    
+    async def add_player(self, league_key: str, team_key: str, player_key: str) -> Dict[str, Any]:
+        """Add a player to team"""
+        try:
+            if not await self.ensure_valid_token():
+                raise YahooAuthenticationError("No valid access token")
+                
+            client = await self._get_api_client()
+            if not client:
+                raise YahooFantasyError("Failed to get API client")
+                
+            async with client:
+                response = await client.add_player(league_key, team_key, player_key)
+                return self.parser.parse_transaction(response)
+                
+        except Exception as e:
+            logger.error(f"Error adding player: {e}")
+            raise
+    
+    async def drop_player(self, league_key: str, team_key: str, player_key: str) -> Dict[str, Any]:
+        """Drop a player from team"""
+        try:
+            if not await self.ensure_valid_token():
+                raise YahooAuthenticationError("No valid access token")
+                
+            client = await self._get_api_client()
+            if not client:
+                raise YahooFantasyError("Failed to get API client")
+                
+            async with client:
+                response = await client.drop_player(league_key, team_key, player_key)
+                return self.parser.parse_transaction(response)
+                
+        except Exception as e:
+            logger.error(f"Error dropping player: {e}")
+            raise
+    
+    async def search_players(
+        self,
+        league_key: str,
+        search: str = None,
+        position: str = None,
+        status: str = "A",  # Available players
+        sort: str = "AR",   # By rank
+        start: int = 0,
+        count: int = 25
+    ) -> List[Dict[str, Any]]:
+        """Search for players in league context"""
+        try:
+            # Check cache
+            cache_params = {
+                "search": search,
+                "position": position,
+                "status": status,
+                "sort": sort,
+                "start": start,
+                "count": count
+            }
+            
+            cached_data = await self.cache.get("player_search", league_key, cache_params)
+            if cached_data:
+                return cached_data
+                
+            if not await self.ensure_valid_token():
+                return []
+                
+            client = await self._get_api_client()
+            if not client:
+                return []
+                
+            async with client:
+                response = await client.search_players(
+                    league_key,
+                    search=search,
+                    position=position,
+                    status=status,
+                    sort=sort,
+                    start=start,
+                    count=count
+                )
+                
+                players = self.parser.extract_collection(response, 'players')
+                
+                # Cache results
+                await self.cache.set("player_search", league_key, players, cache_params, ttl=300)
+                
+                return players
+                
+        except Exception as e:
+            logger.error(f"Error searching players: {e}")
+            return []
+    
+    async def get_scoreboard(self, league_key: str, week: int = None) -> Dict[str, Any]:
+        """Get league scoreboard for a specific week"""
+        try:
+            if not await self.ensure_valid_token():
+                return {}
+                
+            client = await self._get_api_client()
+            if not client:
+                return {}
+                
+            async with client:
+                response = await client.get_league_scoreboard(league_key, week)
+                
+                # Parse matchups
+                content = self.parser.extract_content(response)
+                if 'league' in content and 'scoreboard' in content['league']:
+                    return content['league']['scoreboard']
+                    
+                return {}
+                
+        except Exception as e:
+            logger.error(f"Error getting scoreboard: {e}")
+            return {}
+    
+    async def close(self):
+        """Close API connections and cache"""
+        try:
+            if self.api_client:
+                await self.api_client.__aexit__(None, None, None)
+            await self.cache.close()
+        except Exception as e:
+            logger.error(f"Error closing API connections: {e}")
     
     def _get_mock_league_stats(self, league_id: str) -> Dict[str, Any]:
         """Get mock league stats"""
