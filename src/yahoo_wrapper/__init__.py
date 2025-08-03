@@ -14,8 +14,9 @@ import base64
 import secrets
 from dotenv import load_dotenv
 
-# Load environment variables
-load_dotenv()
+# Load environment variables - but don't override existing ones in production
+# This prevents local .env from overriding Render's environment variables
+load_dotenv(override=False)
 
 from src.shared.models import PlayerStats, LeagueInfo, TeamInfo, SportType, Position
 
