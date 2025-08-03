@@ -133,10 +133,31 @@ async def authorize():
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/auth/callback")
-async def auth_callback(code: str = Query(...), state: str = Query(...)):
+async def auth_callback(
+    code: str = Query(None), 
+    state: str = Query(None),
+    error: str = Query(None),
+    error_description: str = Query(None)
+):
     """Handle OAuth2 callback from Yahoo"""
     try:
-        logger.info(f"Received real OAuth callback with code: {code[:10]}... and state: {state[:10]}...")
+        # Check for OAuth errors first
+        if error:
+            logger.error(f"OAuth error: {error} - {error_description}")
+            return RedirectResponse(
+                url=f"/?auth=error&error={error}&desc={error_description or 'Unknown error'}",
+                status_code=302
+            )
+        
+        # Check if code is missing
+        if not code:
+            logger.error("OAuth callback received without authorization code")
+            return RedirectResponse(
+                url="/?auth=error&error=missing_code&desc=No authorization code received",
+                status_code=302
+            )
+        
+        logger.info(f"Received real OAuth callback with code: {code[:10]}... and state: {state[:10] if state else 'None'}...")
         
         # Exchange authorization code for access token
         success = await yahoo_api.exchange_code_for_token(code, state)
