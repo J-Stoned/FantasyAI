@@ -88,12 +88,15 @@ async def health_check():
 @app.get("/api/debug/oauth-config")
 async def debug_oauth_config():
     """Debug endpoint to check OAuth configuration"""
+    import os
     return {
         "redirect_uri": yahoo_api.redirect_uri,
         "client_id": yahoo_api.client_id[:10] + "..." if yahoo_api.client_id else "NOT SET",
         "env_redirect": os.getenv("YAHOO_REDIRECT_URI"),
         "env_exists": "YAHOO_REDIRECT_URI" in os.environ,
-        "all_env_vars": list(os.environ.keys())
+        "environment": os.getenv("ENVIRONMENT", "NOT SET"),
+        "num_env_vars": len(os.environ),
+        "has_yahoo_vars": any(k.startswith("YAHOO") for k in os.environ.keys())
     }
 
 # OAuth2 Authorization Endpoints
