@@ -30,6 +30,12 @@ class YahooFantasyAPI:
         self.client_secret = os.getenv("YAHOO_CLIENT_SECRET", "")
         self.redirect_uri = os.getenv("YAHOO_REDIRECT_URI", "http://localhost:8000/auth/callback")
         
+        # Log the loaded configuration
+        logger.info(f"Yahoo OAuth2 configuration loaded:")
+        logger.info(f"  Client ID: {self.client_id[:10]}..." if self.client_id else "  Client ID: NOT SET")
+        logger.info(f"  Redirect URI: {self.redirect_uri}")
+        logger.info(f"  Environment: {os.getenv('ENVIRONMENT', 'not set')}")
+        
         # Validate credentials
         if not self.client_id or not self.client_secret:
             logger.warning("Yahoo API credentials not found in environment variables!")

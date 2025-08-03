@@ -85,6 +85,17 @@ async def health_check():
     """Health check endpoint"""
     return {"status": "healthy", "components": ["database", "ai_engine", "yahoo_api"]}
 
+@app.get("/api/debug/oauth-config")
+async def debug_oauth_config():
+    """Debug endpoint to check OAuth configuration"""
+    return {
+        "redirect_uri": yahoo_api.redirect_uri,
+        "client_id": yahoo_api.client_id[:10] + "..." if yahoo_api.client_id else "NOT SET",
+        "env_redirect": os.getenv("YAHOO_REDIRECT_URI"),
+        "env_exists": "YAHOO_REDIRECT_URI" in os.environ,
+        "all_env_vars": list(os.environ.keys())
+    }
+
 # OAuth2 Authorization Endpoints
 @app.get("/auth/authorize")
 async def authorize():
